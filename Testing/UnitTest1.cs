@@ -1,15 +1,11 @@
-using Microsoft.VisualStudio.TestPlatform.ObjectModel;
-using Microsoft.VisualStudio.TestPlatform.Utilities;
 using NUnit.Framework.Internal;
-using System.Buffers;
-using System.Diagnostics;
 using System.IO.Compression;
 
 namespace ConMaster.Compression.Tests
 {
     public class CompressionTests
     {
-        byte[][] data = new byte[8][];
+        readonly byte[][] data = new byte[4][];
         [SetUp]
         public void Setup()
         {
@@ -69,6 +65,21 @@ namespace ConMaster.Compression.Tests
             SpanCheck(output1, output2);
         }
         [Test]
+        public void Deflate_Compression_Slow()
+        {
+            DeflateCompressor compressor = new()
+            {
+                CompressionLevel = CompressionLevel.SmallestSize,
+                MemoryLevel = 1
+            };
+            Span<byte> output1 = data[1];
+            Span<byte> output2 = data[2];
+            output1 = compressor.CompressToSpan(data[0], output1);
+            output2 = compressor.DecompressToSpan(output1, output2);
+            SpanCheck(output1, output2);
+        }
+
+        [Test]
         public void Deflate_Compression_MemoryEfficient()
         {
             DeflateCompressor compressor = new()
@@ -82,7 +93,50 @@ namespace ConMaster.Compression.Tests
             output2 = compressor.DecompressToSpan(output1, output2);
             SpanCheck(output1, output2);
         }
-        internal void SpanCheck(ReadOnlySpan<byte> ouput, ReadOnlySpan<byte> results)
+
+        [Test]
+        public void Deflate_Compression_No_Compression()
+        {
+            DeflateCompressor compressor = new()
+            {
+                CompressionLevel = CompressionLevel.NoCompression,
+            };
+            Span<byte> output1 = data[1];
+            Span<byte> output2 = data[2];
+            output1 = compressor.CompressToSpan(data[0], output1);
+            output2 = compressor.DecompressToSpan(output1, output2);
+            SpanCheck(output1, output2);
+        }
+        [Test]
+        public void GZip_Compression()
+        {
+            GZipCompressor compressor = new()
+            {
+                CompressionLevel = CompressionLevel.Optimal,
+                MemoryLevel = 1
+            };
+            Span<byte> output1 = data[1];
+            Span<byte> output2 = data[2];
+            output1 = compressor.CompressToSpan(data[0], output1);
+            output2 = compressor.DecompressToSpan(output1, output2);
+            SpanCheck(output1, output2);
+        }
+        [Test]
+        public void ZLib_Compression()
+        {
+            ZLibCompressor compressor = new()
+            {
+                CompressionLevel = CompressionLevel.Optimal,
+                MemoryLevel = 1
+            };
+            Span<byte> output1 = data[1];
+            Span<byte> output2 = data[2];
+            output1 = compressor.CompressToSpan(data[0], output1);
+            output2 = compressor.DecompressToSpan(output1, output2);
+            SpanCheck(output1, output2);
+        }
+
+        private void SpanCheck(ReadOnlySpan<byte> ouput, ReadOnlySpan<byte> results)
         {
             if (results.Length != data.Length) Assert.Fail("Decompressed bytes after compression fails.");
             if (!results.SequenceEqual(data[0])) Assert.Fail("Decompression results do not match original source");
