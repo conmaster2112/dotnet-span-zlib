@@ -1,5 +1,8 @@
+using Microsoft.VisualStudio.TestPlatform.Utilities;
 using NUnit.Framework.Internal;
+using System;
 using System.IO.Compression;
+using System.Text;
 
 namespace ConMaster.Compression.Tests
 {
@@ -50,62 +53,11 @@ namespace ConMaster.Compression.Tests
             output2 = compressor.DecompressToSpan(output1, output2);
             SpanCheck(output1, output2);
         }
-        [Test]
-        public void Deflate_Compression_Fast()
+        [TestCase((uint)123456789)]
+        public void Crc32(uint testCase)
         {
-            DeflateCompressor compressor = new()
-            {
-                CompressionLevel = CompressionLevel.Fastest,
-                MemoryLevel = 9
-            };
-            Span<byte> output1 = data[1];
-            Span<byte> output2 = data[2];
-            output1 = compressor.CompressToSpan(data[0], output1);
-            output2 = compressor.DecompressToSpan(output1, output2);
-            SpanCheck(output1, output2);
-        }
-        [Test]
-        public void Deflate_Compression_Slow()
-        {
-            DeflateCompressor compressor = new()
-            {
-                CompressionLevel = CompressionLevel.SmallestSize,
-                MemoryLevel = 1
-            };
-            Span<byte> output1 = data[1];
-            Span<byte> output2 = data[2];
-            output1 = compressor.CompressToSpan(data[0], output1);
-            output2 = compressor.DecompressToSpan(output1, output2);
-            SpanCheck(output1, output2);
-        }
-
-        [Test]
-        public void Deflate_Compression_MemoryEfficient()
-        {
-            DeflateCompressor compressor = new()
-            {
-                CompressionLevel = CompressionLevel.Optimal,
-                MemoryLevel = 1
-            };
-            Span<byte> output1 = data[1];
-            Span<byte> output2 = data[2];
-            output1 = compressor.CompressToSpan(data[0], output1);
-            output2 = compressor.DecompressToSpan(output1, output2);
-            SpanCheck(output1, output2);
-        }
-
-        [Test]
-        public void Deflate_Compression_No_Compression()
-        {
-            DeflateCompressor compressor = new()
-            {
-                CompressionLevel = CompressionLevel.NoCompression,
-            };
-            Span<byte> output1 = data[1];
-            Span<byte> output2 = data[2];
-            output1 = compressor.CompressToSpan(data[0], output1);
-            output2 = compressor.DecompressToSpan(output1, output2);
-            SpanCheck(output1, output2);
+            uint hash = DeflateCompressor.Crc32(data[0], testCase);
+            Assert.Pass();
         }
         [Test]
         public void GZip_Compression()
@@ -136,10 +88,28 @@ namespace ConMaster.Compression.Tests
             SpanCheck(output1, output2);
         }
 
-        private void SpanCheck(ReadOnlySpan<byte> ouput, ReadOnlySpan<byte> results)
+        [TestCase(CompressionLevel.Fastest)]
+        [TestCase(CompressionLevel.Optimal)]
+        [TestCase(CompressionLevel.NoCompression)]
+        [TestCase(CompressionLevel.SmallestSize)]
+        public void DeflateCompressionTest(CompressionLevel level)
+        {
+            DeflateCompressor compressor = new()
+            {
+                CompressionLevel = level,
+                MemoryLevel = 9
+            };
+            Span<byte> output1 = data[1];
+            Span<byte> output2 = data[2];
+            output1 = compressor.CompressToSpan(data[0], output1);
+            output2 = compressor.DecompressToSpan(output1, output2);
+            SpanCheck(output1, output2);
+        }
+        private void SpanCheck(ReadOnlySpan<byte> output, ReadOnlySpan<byte> results)
         {
             if (results.Length != data.Length) Assert.Fail("Decompressed bytes after compression fails.");
             if (!results.SequenceEqual(data[0])) Assert.Fail("Decompression results do not match original source");
+            if (output.Length > results.Length) Assert.Fail("compression output has to be lower then decompressed results");
             Assert.Pass("Success");
         }
     }

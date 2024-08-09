@@ -11,18 +11,19 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     
     <PackageId>conmaster.compression.spanzlib</PackageId>
-    <PackageIcon>package_icon.jpeg</PackageIcon>
+    <PackageIcon></PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>compression;span;memory;deflate;decompression;zlib</PackageTags>
 
-    <Title>SpanZlib</Title>
+    <Title>SpanZlib - Lite</Title>
+    <ProductName>SpanZLib - Lite</ProductName>
     <Product>SpanZlib</Product>
-    <Version>0.1.0-init</Version>
+    <Version>1.0.0-beta</Version>
     <Authors>ConMaster</Authors>
 
     <RepositoryType></RepositoryType>
     <RepositoryUrl>https://github.com/conmaster2112/dotnet-span-zlib</RepositoryUrl>
-    <Description>Lite, fast and memory efficient library for deflate compression/decompression focused on Span concepts, see: https://learn.microsoft.com/en-us/archive/msdn-magazine/2018/january/csharp-all-about-span-exploring-a-new-net-mainstay</Description>
+    <Description>Fast, Lite and memory efficient, a library that focuses both on ease of use and also bypasses the use of dotnet streams, excluding streams has the positive effect of full control over memory allocation. The focus of this library is to use the span structure wherever possible.</Description>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
@@ -41,10 +42,6 @@
 
   <ItemGroup>
     <None Include="..\LICENSE.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-    <None Include="..\package_icon.jpeg">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
