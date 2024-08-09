@@ -1,5 +1,5 @@
+dotnet-span-zlib/bin/
+dotnet-span-zlib/obj/
+Testing/bin
+Testing/obj
 .vs/
-./dotnet-span-zlib/bin
-./dotnet-span-zlib/obj
-./Testing/bin
-./Testing/obj

@@ -21,7 +21,7 @@ namespace ConMaster.Compression.Tests
             """u8;
             for (int i = 0; i < data.Length; i++)
             {
-                data[i] = new byte[text.Length];
+                data[i] = new byte[text.Length + 255];
             }
             text.CopyTo(data[0]);
             Assert.Pass();
