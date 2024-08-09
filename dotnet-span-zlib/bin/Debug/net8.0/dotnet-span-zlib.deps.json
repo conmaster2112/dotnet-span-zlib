@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "dotnet-span-zlib/0.1.0-init": {
+        "runtime": {
+          "dotnet-span-zlib.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "dotnet-span-zlib/0.1.0-init": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
