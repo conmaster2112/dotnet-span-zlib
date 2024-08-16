@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -77,6 +78,26 @@ namespace ConMaster.Compression
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Compress(ReadOnlySpan<byte> source, Span<byte> destination, out int bytesWritten) => bytesWritten = Compress(source, destination);
         /// <summary>
+        /// Compression Algorithm
+        /// </summary>
+        /// <param name="source">Source buffer to operate compression on</param>
+        /// <param name="destination">Target buffer to write compression results to</param>
+        /// <param name="bytesWritten">Number of bytes written to destination span, returns -1 when fails</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryCompress(ReadOnlySpan<byte> source, Span<byte> destination, out int bytesWritten)
+        {
+            try
+            {
+                bytesWritten = Compress(source, destination);
+            }
+            catch (Exception)
+            {
+                bytesWritten = -1;
+                return false;
+            }
+            return true;
+        }
+        /// <summary>
         /// Dempression Algorithm
         /// </summary>
         /// <param name="source">Source buffer to operate decompression on</param>
@@ -99,6 +120,26 @@ namespace ConMaster.Compression
         /// <param name="bytesWritten">Number of bytes written to destination span</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Decompress(ReadOnlySpan<byte> source, Span<byte> destination, out int bytesWritten) => bytesWritten = Decompress(source, destination);
+        /// <summary>
+        /// Dempression Algorithm
+        /// </summary>
+        /// <param name="source">Source buffer to operate decompression on</param>
+        /// <param name="destination">Target buffer to write decompression results to</param>
+        /// <param name="bytesWritten">Number of bytes written to destination span. returns -1 when fails</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryDecompress(ReadOnlySpan<byte> source, Span<byte> destination, out int bytesWritten)
+        {
+            try
+            {
+                bytesWritten = Decompress(source, destination);
+            }
+            catch (Exception)
+            {
+                bytesWritten = -1;
+                return false;
+            }
+            return true;
+        }
 
         /// <summary>
         /// Basic C3C hashing algorithm

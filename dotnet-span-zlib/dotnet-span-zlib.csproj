@@ -17,8 +17,8 @@
 
     <Title>SpanZlib - Lite</Title>
     <ProductName>SpanZLib - Lite</ProductName>
-    <Product>SpanZlib</Product>
-    <Version>1.0.0-beta</Version>
+    <Product>SpanZlib - Lite</Product>
+    <Version>1.0.0</Version>
     <Authors>ConMaster</Authors>
 
     <RepositoryType></RepositoryType>

@@ -2,6 +2,7 @@ using Microsoft.VisualStudio.TestPlatform.Utilities;
 using NUnit.Framework.Internal;
 using System;
 using System.IO.Compression;
+using System.Reflection.Emit;
 using System.Text;
 
 namespace ConMaster.Compression.Tests
@@ -111,6 +112,18 @@ namespace ConMaster.Compression.Tests
             if (!results.SequenceEqual(data[0])) Assert.Fail("Decompression results do not match original source");
             if (output.Length > results.Length) Assert.Fail("compression output has to be lower then decompressed results");
             Assert.Pass("Success");
+        }
+        [Test]
+        public void TryCompressorTest()
+        {
+            DeflateCompressor compressor = new()
+            {
+                CompressionLevel = CompressionLevel.Optimal,
+                MemoryLevel = 8
+            };
+            Span<byte> output1 = data[1];
+            Span<byte> output2 = data[2];
+            if(!compressor.TryCompress(data[0], new byte[5], out int byteWritten)) Assert.Pass("" + byteWritten);
         }
     }
 }
