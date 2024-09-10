@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace ConMaster.Compression
@@ -102,19 +101,21 @@ namespace ConMaster.Compression
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal struct ZStream
     {
-        public unsafe ZStream(ReadOnlySpan<byte> source, Span<byte> output)
+        public unsafe ZStream(nint src, int srcLength, nint output, int outputLength)
         {
-            nextIn = (nint)Unsafe.AsPointer(ref MemoryMarshal.GetReference(source));
-            availIn = (uint)source.Length;
-            nextOut = (nint)Unsafe.AsPointer(ref MemoryMarshal.GetReference(output));
-            availOut = (uint)output.Length;
+            nextIn = src;
+            availIn = (uint)srcLength;
+            nextOut = output;
+            availOut = (uint)outputLength;
+            msg = 0;
+            internalState = 0;
         }
         internal nint nextIn;  //Bytef    *next_in;  /* next input byte */
         internal nint nextOut; //Bytef    *next_out; /* next output byte should be put there */
 
-        internal IntPtr msg;     //char     *msg;      /* last error message, NULL if no error */
+        internal nint msg;     //char     *msg;      /* last error message, NULL if no error */
 
-        private readonly IntPtr internalState;    //internal state that is not visible to managed code
+        private readonly nint internalState;    //internal state that is not visible to managed code
 
         internal uint availIn;   //uInt     avail_in;  /* number of bytes available at next_in */
         internal uint availOut;  //uInt     avail_out; /* remaining free space at next_out */

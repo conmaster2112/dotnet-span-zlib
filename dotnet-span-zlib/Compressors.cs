@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -178,45 +177,111 @@ namespace ConMaster.Compression
         }
         internal unsafe int InternalDeflate(ReadOnlySpan<byte> source, Span<byte> destination)
         {
-            ZStream s = new(source, destination);
-            if (
-                    ZLibInterop.DeflateInit2_(
-                        ref s, _compressionLevel, CompressionMethod.Deflated,
-                        _windowBits, _memoryLevel, CompressionStrategy.DefaultStrategy
-                    ) != ZLibErrorCode.Ok
-                ) throw new Exception("Initialization Failed");
+            fixed(byte* src = &MemoryMarshal.GetReference(source))
+            {
+                fixed(byte* dst = &MemoryMarshal.GetReference(destination))
+                {
+                    ZStream s = new((nint)src, source.Length, (nint)dst, destination.Length);
+                    ZLibErrorCode errorCode;
+                    try
+                    {
+                        errorCode = ZLibInterop.DeflateInit2_(
+                            ref s, _compressionLevel, CompressionMethod.Deflated,
+                            _windowBits, _memoryLevel, CompressionStrategy.DefaultStrategy
+                        );
+                        if (errorCode != ZLibErrorCode.Ok) throw new ZlibUnexpectedException("Initialization Failed", errorCode);
 
-            if (ZLibInterop.Deflate(ref s, ZLibFlushCode.NoFlush) != ZLibErrorCode.Ok) throw new Exception("Unexpected error: " + Marshal.PtrToStringUTF8(s.msg));
-            if ((int)ZLibInterop.Deflate(ref s, ZLibFlushCode.Finish) < 0) throw new Exception("Unexpected error: " + Marshal.PtrToStringUTF8(s.msg));
-            if (ZLibInterop.DeflateEnd(ref s) != ZLibErrorCode.Ok) throw new Exception("Unexpected ending: " + Marshal.PtrToStringUTF8(s.msg));
-            return destination.Length - (int)s.availOut;
+                        errorCode = ZLibInterop.Deflate(ref s, ZLibFlushCode.SyncFlush);
+                        if (errorCode != ZLibErrorCode.Ok) throw new ZlibUnexpectedException("Unexpected error: " + Marshal.PtrToStringUTF8(s.msg), errorCode);
+
+                        errorCode = ZLibInterop.Deflate(ref s, ZLibFlushCode.Finish);
+                        return errorCode switch
+                        {
+                            ZLibErrorCode.Ok or ZLibErrorCode.StreamEnd => destination.Length - (int)s.availOut,
+                            ZLibErrorCode.BufError => throw new ZlibBufferOverflowException("Destianation buffer overflow"),
+                            _ => throw new ZlibUnexpectedException("Unexpected error: " + Marshal.PtrToStringUTF8(s.msg), errorCode),
+                        };
+                    }
+                    finally
+                    {
+                        ZLibInterop.DeflateEnd(ref s);
+                    }
+                }
+            }
         }
         internal unsafe int InternalInflate(ReadOnlySpan<byte> source, Span<byte> destination)
         {
-            ZStream s = new(source, destination);
-            if (ZLibInterop.InflateInit2_(ref s, _windowBits) != ZLibErrorCode.Ok)
-                throw new Exception("Initialization Failed");
-
-            ZLibErrorCode err = ZLibInterop.Inflate(ref s, ZLibFlushCode.NoFlush);
-            switch (err)
+            fixed (byte* src = &MemoryMarshal.GetReference(source))
             {
-                case ZLibErrorCode.Ok:
-                case ZLibErrorCode.StreamEnd:
-                    break;
-                case ZLibErrorCode.BufError:
-                    throw new Exception("Output buffer is not large enought");
-                default: throw new Exception("Unexpected error: " + Marshal.PtrToStringUTF8(s.msg));
+                fixed (byte* dst = &MemoryMarshal.GetReference(destination))
+                {
+                    ZStream s = new((nint)src, source.Length, (nint)dst, destination.Length);
+                    ZLibErrorCode errorCode;
+                    try
+                    {
+                        errorCode = ZLibInterop.InflateInit2_(ref s, _windowBits);
+                        if (errorCode != ZLibErrorCode.Ok) throw new ZlibUnexpectedException("Initialization Failed", errorCode);
+
+                        errorCode = ZLibInterop.Inflate(ref s, ZLibFlushCode.SyncFlush);
+                        if (errorCode == ZLibErrorCode.StreamEnd) return destination.Length - (int)s.availOut;
+                        else if (errorCode != ZLibErrorCode.Ok) throw new ZlibUnexpectedException("Unexpected error: " + Marshal.PtrToStringUTF8(s.msg), errorCode);
+
+                        errorCode = ZLibInterop.Inflate(ref s, ZLibFlushCode.Finish);
+                        return errorCode switch
+                        {
+                            ZLibErrorCode.Ok or ZLibErrorCode.StreamEnd => destination.Length - (int)s.availOut,
+                            ZLibErrorCode.BufError => throw new ZlibBufferOverflowException("Destianation buffer overflow"),
+                            _ => throw new ZlibUnexpectedException("Unexpected error: " + Marshal.PtrToStringUTF8(s.msg), errorCode),
+                        };
+                    }
+                    finally
+                    {
+                        ZLibInterop.InflateEnd(ref s);
+                    }
+                }
             }
-            if (ZLibInterop.InflateEnd(ref s) != ZLibErrorCode.Ok) throw new Exception("Unexpected ending: " + Marshal.PtrToStringUTF8(s.msg));
-            return destination.Length - (int)s.availOut;
         }
     }
     /// <summary>
     /// Deflate Compression Algorithm - With zlib header
     /// </summary>
-    public class ZLibCompressor() : DeflateCompressor(ZLibInterop.ZLib_DefaultWindowBits) { }
+    public class ZLibCompressor : DeflateCompressor
+    {
+        /// <summary>
+        /// Deflate Compression Algorithm - With zlib header
+        /// </summary>
+        public ZLibCompressor() : base(ZLibInterop.ZLib_DefaultWindowBits) { }
+    }
     /// <summary>
     /// Deflate Compression Algorithm - With gzib header
     /// </summary>
-    public class GZipCompressor() : DeflateCompressor(ZLibInterop.GZip_DefaultWindowBits) { }
+    public class GZipCompressor : DeflateCompressor
+    {
+        /// <summary>
+        /// Deflate Compression Algorithm - With zlib header
+        /// </summary>
+        public GZipCompressor() : base(ZLibInterop.GZip_DefaultWindowBits) { }
+    }
+
+    /// <summary>
+    /// Exception throwed when destination buffer overflows.
+    /// </summary>
+    public class ZlibBufferOverflowException : Exception
+    {
+        /// <summary>
+        /// Exception throwed when destination buffer overflows.
+        /// </summary>
+        public ZlibBufferOverflowException(string message) : base(message) { }
+    }
+    /// <summary>
+    /// Internal Unexpected Error.
+    /// </summary>
+    internal class ZlibUnexpectedException : Exception
+    {
+        public ZlibUnexpectedException(string message, ZLibErrorCode code) : base(message + ": " + code)
+        {
+            Code = code;   
+        }
+        public ZLibErrorCode Code;
+    }
 }

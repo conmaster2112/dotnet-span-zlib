@@ -18,7 +18,7 @@
     <Title>SpanZlib - Lite</Title>
     <ProductName>SpanZLib - Lite</ProductName>
     <Product>SpanZlib - Lite</Product>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Authors>ConMaster</Authors>
 
     <RepositoryType></RepositoryType>
@@ -26,6 +26,9 @@
     <Description>Fast, Lite and memory efficient, a library that focuses both on ease of use and also bypasses the use of dotnet streams, excluding streams has the positive effect of full control over memory allocation. The focus of this library is to use the span structure wherever possible.</Description>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <PackageReleaseNotes>- Fixed Unthrowen Exceptions
+- Improved Exception Messages
+- Remapped Internal Managed Resource to match unmanaged native resources</PackageReleaseNotes>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
